@@ -26,6 +26,7 @@
         <module>dropwizard-auth</module>
         <module>dropwizard-example</module>
         <module>dropwizard-views</module>
+        <module>dropwizard-scopes</module>
         <module>dropwizard-testing</module>
     </modules>
 
