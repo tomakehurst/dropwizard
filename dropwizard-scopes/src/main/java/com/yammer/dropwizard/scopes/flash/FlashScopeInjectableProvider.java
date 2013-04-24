@@ -8,9 +8,6 @@ import com.sun.jersey.server.impl.inject.AbstractHttpContextInjectable;
 import com.sun.jersey.spi.inject.Injectable;
 import com.sun.jersey.spi.inject.InjectableProvider;
 
-import javax.ws.rs.core.Cookie;
-
-import static com.yammer.dropwizard.jersey.flashscope.Flash.flashScope;
 
 public class FlashScopeInjectableProvider implements InjectableProvider<FlashScope, Parameter> {
 
@@ -20,16 +17,22 @@ public class FlashScopeInjectableProvider implements InjectableProvider<FlashSco
     }
 
     @Override
-    public Injectable getInjectable(ComponentContext ic, FlashScope flashScope, Parameter parameter) {
+    public Injectable getInjectable(ComponentContext ic, FlashScope flashScope, final Parameter parameter) {
         return new AbstractHttpContextInjectable<Flash>() {
             @Override
             public Flash getValue(HttpContext context) {
-                Cookie cookie = context.getRequest().getCookies().get(Flash.FLASH_COOKIE_NAME);
-                if (cookie != null) {
-                    return Flash.restoreFrom(cookie);
+                if (parameter.getParameterClass().equals(FlashOut.class)) {
+                    FlashOut flashOut = new FlashOut();
+                    context.getProperties().put(FlashOut.class.getName(), flashOut);
+                    return flashOut;
                 }
 
-                return flashScope();
+                FlashIn flashIn = (FlashIn) context.getProperties().get(FlashIn.class.getName());
+                if (flashIn != null) {
+                    return flashIn;
+                }
+
+                return new FlashIn();
             }
         };
     }
