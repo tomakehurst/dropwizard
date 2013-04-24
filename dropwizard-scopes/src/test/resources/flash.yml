@@ -1,1 +1,4 @@
-dummy: "anything"
+jerseyClient:
+  cookiesEnabled: true
+  gzipEnabled: false
+

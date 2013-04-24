@@ -6,7 +6,6 @@ import com.sun.jersey.spi.container.ResourceMethodDispatchProvider;
 import com.sun.jersey.spi.dispatch.RequestDispatcher;
 
 import javax.ws.rs.core.Cookie;
-import javax.ws.rs.core.MultivaluedMap;
 import java.util.Map;
 
 import static javax.ws.rs.core.HttpHeaders.SET_COOKIE;
@@ -41,7 +40,6 @@ public class FlashScopeResourceMethodDispatchProvider implements ResourceMethodD
                 } else {
                     if (contextProps.containsKey(FlashIn.class.getName())) {
                         context.getResponse().getHttpHeaders().add(SET_COOKIE, FlashOut.expireImmediately());
-                        System.out.println("Expired");
                     }
                 }
             }

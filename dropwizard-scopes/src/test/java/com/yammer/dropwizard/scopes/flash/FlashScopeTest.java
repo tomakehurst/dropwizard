@@ -1,36 +1,28 @@
 package com.yammer.dropwizard.scopes.flash;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Predicate;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.representation.Form;
 import com.yammer.dropwizard.Service;
+import com.yammer.dropwizard.client.JerseyClientBuilder;
+import com.yammer.dropwizard.client.JerseyClientConfiguration;
 import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Configuration;
 import com.yammer.dropwizard.config.Environment;
 import com.yammer.dropwizard.testing.junit.DropwizardServiceRule;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeDiagnosingMatcher;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.NewCookie;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
+import java.net.URI;
 
-import static com.google.common.collect.Iterables.find;
-import static org.hamcrest.CoreMatchers.containsString;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
 public class FlashScopeTest {
@@ -40,57 +32,24 @@ public class FlashScopeTest {
             new DropwizardServiceRule<TestConfig>(FlashScopeTestService.class,
                                                      resourceFilePath("flash.yml"));
 
-    static Client client = new Client();
+    Client client;
 
-    @Test
-    public void setsFlashScopeContents() throws Exception {
-        ClientResponse response = client
-                .resource(fullUrl("/flash-test"))
-                .post(ClientResponse.class);
-
-        assertThat(response.getCookies(), hasCookieWithName(FlashScope.COOKIE_NAME));
-        String decodedValue = URLDecoder.decode(flashCookieIn(response).getValue(), "utf-8");
-        assertThat(decodedValue, containsString("It worked"));
+    @Before
+    public void init() {
+        client = new JerseyClientBuilder()
+                .using(RULE.getConfiguration().getJerseyClient())
+                .using(newSingleThreadExecutor(), new ObjectMapper())
+                .build();
     }
 
     @Test
-    public void doesNotSetFlashCookieIfFlashOutIsEmpty() {
-        ClientResponse response = client
-                .resource(fullUrl("/flash-empty"))
-                .post(ClientResponse.class);
+    public void endToEndTest() {
+        Form form = new Form();
+        form.add("message", "Show this in flash");
 
-        assertThat(response.getCookies(), not(hasCookieWithName(FlashScope.COOKIE_NAME)));
-    }
+        String returnedMessage = client.resource(fullUrl("/action")).post(String.class, form);
 
-    @Test
-    public void retrievesFlashScopeContents() throws Exception {
-        String message = client
-                .resource(fullUrl("/flash-return"))
-                .cookie(new NewCookie(FlashScope.COOKIE_NAME,
-                        URLEncoder.encode("{\"actionMessage\":\"Flash aaahhh-ahhhhh\"}", "utf-8")))
-                .get(String.class);
-
-        assertThat(message, is("Flash aaahhh-ahhhhh"));
-    }
-
-    @Test
-    public void immediatelyExpiresPreviousFlashCookie() throws Exception {
-        ClientResponse response = client
-                .resource(fullUrl("/flash-return"))
-                .cookie(new NewCookie(FlashScope.COOKIE_NAME,
-                    URLEncoder.encode("{\"actionMessage\":\"Should not see this\"}", "utf-8")))
-                .get(ClientResponse.class);
-
-        assertThat(response.getCookies(), hasCookieWithName(FlashScope.COOKIE_NAME));
-        assertThat(flashCookieIn(response).getMaxAge(), is(0));
-    }
-
-    private NewCookie flashCookieIn(ClientResponse response) {
-        return find(response.getCookies(), new Predicate<NewCookie>() {
-            public boolean apply(NewCookie newCookie) {
-                return newCookie.getName().equals(FlashScope.COOKIE_NAME);
-            }
-        });
+        assertThat(returnedMessage, is("Show this in flash"));
     }
 
     private String fullUrl(String relativeUrl) {
@@ -113,33 +72,29 @@ public class FlashScopeTest {
     @Path("/")
     public static class FlashScopeTestResource {
 
-        @Path("/flash-test")
+        @Path("action")
         @POST
-        public Response doSomething(@FlashScope FlashOut flash) {
-            flash.put("actionMessage", "It worked");
-            return Response.ok()
-                    .build();
+        public Response doSomething(@FlashScope FlashOut flash, @FormParam("message") String message) {
+            flash.put("message", message);
+            return Response.seeOther(URI.create("/result")).build();
         }
 
-        @Path("/flash-empty")
-        @POST
-        public Response doSomethingWithNoFlashOutput(@FlashScope FlashOut flash) {
-            return Response.ok()
-                    .build();
-        }
-
-        @Path("/flash-return")
+        @Path("result")
         @GET
         @Produces("text/plain")
-        public String getResult(@FlashScope FlashIn flashIn) {
-            return flashIn.get("actionMessage");
+        public String getResult(@FlashScope FlashIn flash) {
+            return flash.get("message");
         }
 
     }
 
     public static class TestConfig extends Configuration {
         @JsonProperty
-        private String dummy;
+        private JerseyClientConfiguration jerseyClient;
+
+        public JerseyClientConfiguration getJerseyClient() {
+            return jerseyClient;
+        }
     }
 
 
@@ -149,29 +104,6 @@ public class FlashScopeTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private static Matcher<Iterable<? super NewCookie>> hasCookieWithName(String name) {
-        return CoreMatchers.hasItem(withName(name));
-    }
-
-    private static Matcher<NewCookie> withName(final String cookieName) {
-        return new TypeSafeDiagnosingMatcher<NewCookie>() {
-            @Override
-            protected boolean matchesSafely(NewCookie newCookie, Description description) {
-                if (!newCookie.getName().equals(cookieName)) {
-                    description.appendText("cookie name is not " + cookieName);
-                    return false;
-                }
-
-                return true;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("a cookie with name " + cookieName);
-            }
-        };
     }
 
 }
