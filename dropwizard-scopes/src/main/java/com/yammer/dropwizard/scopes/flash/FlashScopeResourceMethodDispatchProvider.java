@@ -31,14 +31,17 @@ public class FlashScopeResourceMethodDispatchProvider implements ResourceMethodD
                 Map<String, Object> contextProps = context.getProperties();
 
                 createFlashInIfCookiePresent(requestCookies, contextProps);
-
                 dispatcher.dispatch(resource, context);
+                writeFlashOutToResponse(context, contextProps);
+            }
 
+            private void writeFlashOutToResponse(HttpContext context, Map<String, Object> contextProps) {
                 FlashOut flashOut = (FlashOut) contextProps.get(FlashOut.class.getName());
                 if (flashOut != null && !flashOut.isEmpty()) {
                     context.getResponse().getHttpHeaders().add(SET_COOKIE, flashOut.build());
                 } else {
                     if (contextProps.containsKey(FlashIn.class.getName())) {
+                        //Because some IE versions aren't too strict about expiring cookies on time
                         context.getResponse().getHttpHeaders().add(SET_COOKIE, FlashOut.expireImmediately());
                     }
                 }
