@@ -1,21 +1,12 @@
 package com.yammer.dropwizard.scopes.flash;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Predicate;
-import com.google.common.io.Resources;
-import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
-import com.yammer.dropwizard.Service;
-import com.yammer.dropwizard.config.Bootstrap;
-import com.yammer.dropwizard.config.Configuration;
-import com.yammer.dropwizard.config.Environment;
 import com.yammer.dropwizard.testing.ResourceTest;
-import com.yammer.dropwizard.testing.junit.DropwizardServiceRule;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.GET;
@@ -24,7 +15,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
-import java.io.File;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 
@@ -92,19 +82,6 @@ public class FlashScopeTest extends ResourceTest {
         });
     }
 
-    public static class FlashScopeTestService extends Service<TestConfig> {
-
-        @Override
-        public void initialize(Bootstrap<TestConfig> bootstrap) {
-            bootstrap.addBundle(new FlashScopeBundle<TestConfig>());
-        }
-
-        @Override
-        public void run(TestConfig configuration, Environment environment) throws Exception {
-            environment.getJerseyEnvironment().addResource(new FlashScopeTestResource());
-        }
-    }
-
     @Path("/")
     public static class FlashScopeTestResource {
 
@@ -131,12 +108,6 @@ public class FlashScopeTest extends ResourceTest {
         }
 
     }
-
-    public static class TestConfig extends Configuration {
-        @JsonProperty
-        private String dummy;
-    }
-
 
     private static Matcher<Iterable<? super NewCookie>> hasCookieWithName(String name) {
         return CoreMatchers.hasItem(withName(name));
