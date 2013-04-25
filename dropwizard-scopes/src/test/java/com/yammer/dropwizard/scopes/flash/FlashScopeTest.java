@@ -17,6 +17,7 @@ import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.Map;
 
 import static com.google.common.collect.Iterables.find;
 import static org.hamcrest.CoreMatchers.*;
@@ -63,6 +64,23 @@ public class FlashScopeTest extends ResourceTest {
     }
 
     @Test
+    public void canReadNestedValues() throws Exception {
+        String message = client()
+                .resource("/flash-nested-value")
+                .cookie(new NewCookie(FlashScope.COOKIE_NAME,
+                        URLEncoder.encode(
+                                "{                                  \n" +
+                                "  \"outer\": {                     \n" +
+                                "    \"inner\": \"Inner value\"     \n" +
+                                "  }                                \n" +
+                                "}",
+                                "utf-8")))
+                .get(String.class);
+
+        assertThat(message, is("Inner value"));
+    }
+
+    @Test
     public void immediatelyExpiresPreviousFlashCookie() throws Exception {
         ClientResponse response = client()
                 .resource("/flash-return")
@@ -89,15 +107,13 @@ public class FlashScopeTest extends ResourceTest {
         @POST
         public Response doSomething(@FlashScope FlashOut flash) {
             flash.put("actionMessage", "It worked");
-            return Response.ok()
-                    .build();
+            return Response.ok().build();
         }
 
         @Path("/flash-empty")
         @POST
         public Response doSomethingWithNoFlashOutput(@FlashScope FlashOut flash) {
-            return Response.ok()
-                    .build();
+            return Response.ok().build();
         }
 
         @Path("/flash-return")
@@ -105,6 +121,14 @@ public class FlashScopeTest extends ResourceTest {
         @Produces("text/plain")
         public String getResult(@FlashScope FlashIn flashIn) {
             return flashIn.get("actionMessage");
+        }
+
+        @Path("/flash-nested-value")
+        @GET
+        @Produces("text/plain")
+        public String getNestedValue(@FlashScope FlashIn flashIn) {
+            Map<String, String> outer = flashIn.get("outer");
+            return outer.get("inner");
         }
 
     }
