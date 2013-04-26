@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.representation.Form;
 import com.yammer.dropwizard.Service;
 import com.yammer.dropwizard.client.JerseyClientBuilder;
@@ -21,6 +22,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.net.URI;
 
+import static com.yammer.dropwizard.views.flashscope.TestUtils.findCookie;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -52,6 +54,13 @@ public class FlashScopeIntegratedTest {
         assertThat(returnedMessage, is("Show this in flash"));
     }
 
+    @Test
+    public void cookieDomainOverridden() {
+        ClientResponse response = client.resource(fullUrl("/action-no-redirect")).post(ClientResponse.class);
+
+        assertThat(findCookie(response, FlashScope.COOKIE_NAME).getMaxAge(), is(20));
+    }
+
     private String fullUrl(String relativeUrl) {
         return "http://localhost:" + RULE.getLocalPort() + relativeUrl;
     }
@@ -60,7 +69,12 @@ public class FlashScopeIntegratedTest {
 
         @Override
         public void initialize(Bootstrap<TestConfig> bootstrap) {
-            bootstrap.addBundle(new FlashScopeBundle<TestConfig>());
+            bootstrap.addBundle(new FlashScopeBundle<TestConfig>() {
+                @Override
+                protected FlashScopeConfig getFlashScopeConfig(TestConfig configuration) {
+                    return configuration.getFlashScope();
+                }
+            });
         }
 
         @Override
@@ -86,11 +100,26 @@ public class FlashScopeIntegratedTest {
             return flash.get("message");
         }
 
+        @Path("action-no-redirect")
+        @POST
+        public Response putSomethingInTheFlash(@FlashScope FlashOut flash) {
+            flash.put("something", "anything");
+            return Response.ok().build();
+        }
+
     }
 
     public static class TestConfig extends Configuration {
+
+        @JsonProperty
+        private FlashScopeConfig flashScope;
+
         @JsonProperty
         private JerseyClientConfiguration jerseyClient;
+
+        public FlashScopeConfig getFlashScope() {
+            return flashScope;
+        }
 
         public JerseyClientConfiguration getJerseyClient() {
             return jerseyClient;

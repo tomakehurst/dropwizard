@@ -1,12 +1,7 @@
 package com.yammer.dropwizard.views.flashscope;
 
-import com.google.common.base.Predicate;
 import com.sun.jersey.api.client.ClientResponse;
 import com.yammer.dropwizard.testing.ResourceTest;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.junit.Test;
 
 import javax.ws.rs.GET;
@@ -38,8 +33,8 @@ public class FlashScopeTest extends ResourceTest {
                 .resource("/flash-test")
                 .post(ClientResponse.class);
 
-        assertThat(response.getCookies(), hasCookieWithName(FlashScope.COOKIE_NAME));
-        String decodedValue = URLDecoder.decode(flashCookieIn(response).getValue(), "utf-8");
+        assertThat(response.getCookies(), TestUtils.hasCookieWithName(FlashScope.COOKIE_NAME));
+        String decodedValue = URLDecoder.decode(TestUtils.flashCookieIn(response).getValue(), "utf-8");
         assertThat(decodedValue, containsString("It worked"));
     }
 
@@ -49,7 +44,7 @@ public class FlashScopeTest extends ResourceTest {
                 .resource("/flash-empty")
                 .post(ClientResponse.class);
 
-        assertThat(response.getCookies(), not(hasCookieWithName(FlashScope.COOKIE_NAME)));
+        assertThat(response.getCookies(), not(TestUtils.hasCookieWithName(FlashScope.COOKIE_NAME)));
     }
 
     @Test
@@ -88,16 +83,8 @@ public class FlashScopeTest extends ResourceTest {
                     URLEncoder.encode("{\"actionMessage\":\"Should not see this\"}", "utf-8")))
                 .get(ClientResponse.class);
 
-        assertThat(response.getCookies(), hasCookieWithName(FlashScope.COOKIE_NAME));
-        assertThat(flashCookieIn(response).getMaxAge(), is(0));
-    }
-
-    private NewCookie flashCookieIn(ClientResponse response) {
-        return find(response.getCookies(), new Predicate<NewCookie>() {
-            public boolean apply(NewCookie newCookie) {
-                return newCookie.getName().equals(FlashScope.COOKIE_NAME);
-            }
-        });
+        assertThat(response.getCookies(), TestUtils.hasCookieWithName(FlashScope.COOKIE_NAME));
+        assertThat(TestUtils.flashCookieIn(response).getMaxAge(), is(0));
     }
 
     @Path("/")
@@ -131,29 +118,6 @@ public class FlashScopeTest extends ResourceTest {
             return outer.get("inner");
         }
 
-    }
-
-    private static Matcher<Iterable<? super NewCookie>> hasCookieWithName(String name) {
-        return CoreMatchers.hasItem(withName(name));
-    }
-
-    private static Matcher<NewCookie> withName(final String cookieName) {
-        return new TypeSafeDiagnosingMatcher<NewCookie>() {
-            @Override
-            protected boolean matchesSafely(NewCookie newCookie, Description description) {
-                if (!newCookie.getName().equals(cookieName)) {
-                    description.appendText("cookie name is not " + cookieName);
-                    return false;
-                }
-
-                return true;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("a cookie with name " + cookieName);
-            }
-        };
     }
 
 }

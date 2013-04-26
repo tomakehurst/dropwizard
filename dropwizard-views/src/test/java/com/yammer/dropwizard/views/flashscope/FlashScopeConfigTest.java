@@ -1,6 +1,5 @@
 package com.yammer.dropwizard.views.flashscope;
 
-import com.google.common.base.Predicate;
 import com.sun.jersey.api.client.ClientResponse;
 import com.yammer.dropwizard.testing.ResourceTest;
 import com.yammer.dropwizard.util.Duration;
@@ -31,21 +30,10 @@ public class FlashScopeConfigTest extends ResourceTest {
                 .resource("/flash-test")
                 .post(ClientResponse.class);
 
-        NewCookie cookie = findCookie(response, "CUSTOM_FLASH");
+        NewCookie cookie = TestUtils.findCookie(response, "CUSTOM_FLASH");
         assertThat(cookie.getPath(), is("/flash-test"));
         assertThat(cookie.getDomain(), is("flashtown.com"));
         assertThat(cookie.getMaxAge(), is(7));
-    }
-
-    private NewCookie findCookie(ClientResponse response, final String name) {
-        NewCookie cookie = find(response.getCookies(), new Predicate<NewCookie>() {
-            public boolean apply(NewCookie newCookie) {
-                return newCookie.getName().equals(name);
-            }
-        }, null);
-
-        assertNotNull("No cookie with name " + name + " found in response", cookie);
-        return cookie;
     }
 
     static class TestConfig extends FlashScopeConfig {

@@ -9,8 +9,6 @@ import java.net.URLEncoder;
 
 public class FlashOut extends Flash {
 
-    private static final int DEFAULT_MAX_AGE = 5;
-
     public FlashOut() {
         super(Maps.<String, Object>newLinkedHashMap());
     }
