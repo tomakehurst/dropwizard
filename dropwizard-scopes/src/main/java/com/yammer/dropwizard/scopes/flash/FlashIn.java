@@ -1,21 +1,22 @@
 package com.yammer.dropwizard.scopes.flash;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import javax.ws.rs.core.Cookie;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 public class FlashIn extends Flash {
 
-    FlashIn(LinkedHashMap<String, Object> attributes) {
+    FlashIn(Map<String, Object> attributes) {
         super(attributes);
     }
 
     public FlashIn() {
-        super(Maps.<String, Object> newLinkedHashMap());
+        super(ImmutableMap.<String, Object>of());
     }
 
     @SuppressWarnings("unchecked")
@@ -28,7 +29,7 @@ public class FlashIn extends Flash {
         try {
             String decodedJson = URLDecoder.decode(cookie.getValue(), "utf-8");
             LinkedHashMap<String, Object> attributes = objectMapper.readValue(decodedJson, LinkedHashMap.class);
-            return new FlashIn(attributes);
+            return new FlashIn(Collections.<String, Object>unmodifiableMap(attributes));
         } catch (UnsupportedEncodingException e) {
             throw new IllegalArgumentException("Bad flash cookie encoding", e);
         } catch (IOException e) {

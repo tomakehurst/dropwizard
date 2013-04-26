@@ -15,20 +15,6 @@ public class FlashOut extends Flash {
         super(Maps.<String, Object>newLinkedHashMap());
     }
 
-    public <T> FlashOut put(String key, T value) {
-        attributes.put(key, value);
-        return this;
-    }
-
-    public FlashOut remove(String key) {
-        attributes.remove(key);
-        return this;
-    }
-
-    public boolean isEmpty() {
-        return attributes.isEmpty();
-    }
-
     public NewCookie build() {
         try {
             String unencodedJson = objectMapper.writeValueAsString(attributes);
