@@ -8,8 +8,8 @@ public class FlashScopeBundle<T> implements ConfiguredBundle<T> {
 
     @Override
     public void run(T configuration, Environment environment) throws Exception {
-        environment.getJerseyEnvironment().addProvider(FlashScopeResourceMethodDispatchAdapter.class);
-        environment.getJerseyEnvironment().addProvider(FlashScopeInjectableProvider.class);
+        environment.getJerseyEnvironment().addProvider(new FlashScopeResourceMethodDispatchAdapter(new FlashScopeConfig()));
+        environment.getJerseyEnvironment().addProvider(new FlashScopeInjectableProvider());
     }
 
     @Override

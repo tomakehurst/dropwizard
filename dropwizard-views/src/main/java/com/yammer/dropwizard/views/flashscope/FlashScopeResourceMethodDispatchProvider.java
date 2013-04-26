@@ -13,8 +13,10 @@ import static javax.ws.rs.core.HttpHeaders.SET_COOKIE;
 public class FlashScopeResourceMethodDispatchProvider implements ResourceMethodDispatchProvider {
 
     private final ResourceMethodDispatchProvider provider;
+    private final FlashScopeConfig config;
 
-    public FlashScopeResourceMethodDispatchProvider(ResourceMethodDispatchProvider provider) {
+    public FlashScopeResourceMethodDispatchProvider(FlashScopeConfig config, ResourceMethodDispatchProvider provider) {
+        this.config = config;
         this.provider = provider;
     }
 
@@ -38,18 +40,18 @@ public class FlashScopeResourceMethodDispatchProvider implements ResourceMethodD
             private void writeFlashOutToResponse(HttpContext context, Map<String, Object> contextProps) {
                 FlashOut flashOut = (FlashOut) contextProps.get(FlashOut.class.getName());
                 if (flashOut != null && !flashOut.isEmpty()) {
-                    context.getResponse().getHttpHeaders().add(SET_COOKIE, flashOut.build());
+                    context.getResponse().getHttpHeaders().add(SET_COOKIE, flashOut.build(config));
                 } else {
                     if (contextProps.containsKey(FlashIn.class.getName())) {
                         //Because some IE versions aren't too strict about expiring cookies on time
-                        context.getResponse().getHttpHeaders().add(SET_COOKIE, FlashOut.expireImmediately());
+                        context.getResponse().getHttpHeaders().add(SET_COOKIE, FlashOut.expireImmediately(config));
                     }
                 }
             }
 
             private void createFlashInIfCookiePresent(Map<String, Cookie> requestCookies, Map<String, Object> contextProps) {
-                if (requestCookies.containsKey(FlashScope.COOKIE_NAME)) {
-                    Cookie cookie = requestCookies.get(FlashScope.COOKIE_NAME);
+                if (requestCookies.containsKey(config.getCookieName())) {
+                    Cookie cookie = requestCookies.get(config.getCookieName());
                     FlashIn flashIn = FlashIn.restoreFrom(cookie);
                     contextProps.put(FlashIn.class.getName(), flashIn);
                 }

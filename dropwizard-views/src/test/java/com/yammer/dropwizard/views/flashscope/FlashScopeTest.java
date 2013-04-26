@@ -28,8 +28,8 @@ public class FlashScopeTest extends ResourceTest {
     @Override
     protected void setUpResources() throws Exception {
         addResource(new FlashScopeTestResource());
-        addProvider(FlashScopeInjectableProvider.class);
-        addProvider(FlashScopeResourceMethodDispatchAdapter.class);
+        addProvider(new FlashScopeInjectableProvider());
+        addProvider(new FlashScopeResourceMethodDispatchAdapter());
     }
 
     @Test

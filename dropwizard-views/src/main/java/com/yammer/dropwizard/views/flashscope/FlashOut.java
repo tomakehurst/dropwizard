@@ -15,25 +15,33 @@ public class FlashOut extends Flash {
         super(Maps.<String, Object>newLinkedHashMap());
     }
 
-    public NewCookie build() {
+    public NewCookie build(FlashScopeConfig config) {
         try {
             String unencodedJson = objectMapper.writeValueAsString(attributes);
-            return newCookie(unencodedJson, DEFAULT_MAX_AGE);
+            return newCookie(config.getCookieName(),
+                            config.getCookiePath(),
+                            config.getCookieDomain(),
+                            (int) config.getCookieMaxAge().toSeconds(),
+                            unencodedJson);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize flash attributes", e);
         }
     }
 
-    public static NewCookie expireImmediately() {
-        return newCookie("{}", 0);
+    public static NewCookie expireImmediately(FlashScopeConfig config) {
+        return newCookie(config.getCookieName(),
+                config.getCookiePath(),
+                config.getCookieDomain(),
+                0,
+                "{}");
     }
 
-    private static NewCookie newCookie(String content, int maxAge) {
+    private static NewCookie newCookie(String name, String path, String domain, int maxAge, String content) {
         try {
-            return new NewCookie(FlashScope.COOKIE_NAME,
+            return new NewCookie(name,
                     URLEncoder.encode(content, "utf-8"),
-                    "/",
-                    null,
+                    path,
+                    domain,
                     "",
                     maxAge,
                     false);
