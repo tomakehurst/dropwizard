@@ -1,0 +1,4 @@
+jerseyClient:
+  cookiesEnabled: true
+  gzipEnabled: false
+
