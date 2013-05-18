@@ -1,4 +1,4 @@
-package com.codahale.dropwizard.views;
+package com.codahale.dropwizard.views.flashscope;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

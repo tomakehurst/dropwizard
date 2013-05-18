@@ -1,9 +1,9 @@
 package com.example.helloworld.resources;
 
 import com.example.helloworld.views.GuessMyNumberView;
-import com.codahale.dropwizard.views.FlashIn;
-import com.codahale.dropwizard.views.FlashOut;
-import com.codahale.dropwizard.views.FlashScope;
+import com.codahale.dropwizard.views.flashscope.FlashIn;
+import com.codahale.dropwizard.views.flashscope.FlashOut;
+import com.codahale.dropwizard.views.flashscope.FlashScope;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;

@@ -1,4 +1,4 @@
-package com.codahale.dropwizard.views;
+package com.codahale.dropwizard.views.flashscope;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Maps;

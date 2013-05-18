@@ -1,4 +1,4 @@
-package com.codahale.dropwizard.views;
+package com.codahale.dropwizard.views.flashscope;
 
 import com.codahale.dropwizard.ConfiguredBundle;
 import com.codahale.dropwizard.setup.Bootstrap;

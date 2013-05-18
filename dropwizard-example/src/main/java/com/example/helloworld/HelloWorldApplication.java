@@ -16,7 +16,7 @@ import com.example.helloworld.core.Template;
 import com.example.helloworld.db.PersonDAO;
 import com.example.helloworld.health.TemplateHealthCheck;
 import com.example.helloworld.resources.*;
-import com.codahale.dropwizard.views.FlashScopeBundle;
+import com.codahale.dropwizard.views.flashscope.FlashScopeBundle;
 
 public class HelloWorldApplication extends Application<HelloWorldConfiguration> {
     public static void main(String[] args) throws Exception {

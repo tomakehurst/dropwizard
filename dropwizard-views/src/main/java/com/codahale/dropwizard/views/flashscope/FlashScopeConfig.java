@@ -1,4 +1,4 @@
-package com.codahale.dropwizard.views;
+package com.codahale.dropwizard.views.flashscope;
 
 import com.codahale.dropwizard.util.Duration;
 import com.fasterxml.jackson.annotation.JsonProperty;

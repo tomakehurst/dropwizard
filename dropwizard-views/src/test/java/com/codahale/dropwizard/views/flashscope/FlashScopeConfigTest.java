@@ -1,7 +1,12 @@
-package com.codahale.dropwizard.views;
+package com.codahale.dropwizard.views.flashscope;
 
 import com.codahale.dropwizard.testing.ResourceTest;
 import com.codahale.dropwizard.util.Duration;
+import com.codahale.dropwizard.views.TestUtils;
+import com.codahale.dropwizard.views.flashscope.FlashScope;
+import com.codahale.dropwizard.views.flashscope.FlashScopeConfig;
+import com.codahale.dropwizard.views.flashscope.FlashScopeInjectableProvider;
+import com.codahale.dropwizard.views.flashscope.FlashScopeResourceMethodDispatchAdapter;
 import com.sun.jersey.api.client.ClientResponse;
 import org.junit.Test;
 
@@ -61,7 +66,7 @@ public class FlashScopeConfigTest extends ResourceTest {
 
         @Path("/flash-test")
         @POST
-        public Response doSomething(@FlashScope FlashOut flash) {
+        public Response doSomething(@FlashScope com.codahale.dropwizard.views.flashscope.FlashOut flash) {
             flash.put("actionMessage", "It worked");
             return Response.ok().build();
         }

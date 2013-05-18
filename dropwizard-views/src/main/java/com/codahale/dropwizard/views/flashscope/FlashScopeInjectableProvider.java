@@ -1,4 +1,4 @@
-package com.codahale.dropwizard.views;
+package com.codahale.dropwizard.views.flashscope;
 
 import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.api.model.Parameter;

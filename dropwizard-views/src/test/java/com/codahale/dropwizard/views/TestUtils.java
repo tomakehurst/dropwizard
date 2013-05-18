@@ -1,5 +1,6 @@
 package com.codahale.dropwizard.views;
 
+import com.codahale.dropwizard.views.flashscope.FlashScope;
 import com.google.common.base.Predicate;
 import com.sun.jersey.api.client.ClientResponse;
 import org.hamcrest.CoreMatchers;

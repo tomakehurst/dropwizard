@@ -1,4 +1,4 @@
-package com.codahale.dropwizard.views;
+package com.codahale.dropwizard.views.flashscope;
 
 import com.codahale.dropwizard.Application;
 import com.codahale.dropwizard.Configuration;
@@ -7,6 +7,10 @@ import com.codahale.dropwizard.client.JerseyClientConfiguration;
 import com.codahale.dropwizard.setup.Bootstrap;
 import com.codahale.dropwizard.setup.Environment;
 import com.codahale.dropwizard.testing.junit.DropwizardAppRule;
+import com.codahale.dropwizard.views.TestUtils;
+import com.codahale.dropwizard.views.flashscope.FlashScope;
+import com.codahale.dropwizard.views.flashscope.FlashScopeBundle;
+import com.codahale.dropwizard.views.flashscope.FlashScopeConfig;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -88,7 +92,7 @@ public class FlashScopeIntegratedTest {
 
         @Path("action")
         @POST
-        public Response doSomething(@FlashScope FlashOut flash, @FormParam("message") String message) {
+        public Response doSomething(@FlashScope com.codahale.dropwizard.views.flashscope.FlashOut flash, @FormParam("message") String message) {
             flash.put("message", message);
             return Response.seeOther(URI.create("/result")).build();
         }
@@ -96,13 +100,13 @@ public class FlashScopeIntegratedTest {
         @Path("result")
         @GET
         @Produces("text/plain")
-        public String getResult(@FlashScope FlashIn flash) {
+        public String getResult(@FlashScope com.codahale.dropwizard.views.flashscope.FlashIn flash) {
             return flash.get("message");
         }
 
         @Path("action-no-redirect")
         @POST
-        public Response putSomethingInTheFlash(@FlashScope FlashOut flash) {
+        public Response putSomethingInTheFlash(@FlashScope com.codahale.dropwizard.views.flashscope.FlashOut flash) {
             flash.put("something", "anything");
             return Response.ok().build();
         }

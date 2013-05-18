@@ -1,6 +1,10 @@
-package com.codahale.dropwizard.views;
+package com.codahale.dropwizard.views.flashscope;
 
 import com.codahale.dropwizard.testing.ResourceTest;
+import com.codahale.dropwizard.views.TestUtils;
+import com.codahale.dropwizard.views.flashscope.FlashScope;
+import com.codahale.dropwizard.views.flashscope.FlashScopeInjectableProvider;
+import com.codahale.dropwizard.views.flashscope.FlashScopeResourceMethodDispatchAdapter;
 import com.sun.jersey.api.client.ClientResponse;
 import org.junit.Test;
 
@@ -91,28 +95,28 @@ public class FlashScopeTest extends ResourceTest {
 
         @Path("/flash-test")
         @POST
-        public Response doSomething(@FlashScope FlashOut flash) {
+        public Response doSomething(@FlashScope com.codahale.dropwizard.views.flashscope.FlashOut flash) {
             flash.put("actionMessage", "It worked");
             return Response.ok().build();
         }
 
         @Path("/flash-empty")
         @POST
-        public Response doSomethingWithNoFlashOutput(@FlashScope FlashOut flash) {
+        public Response doSomethingWithNoFlashOutput(@FlashScope com.codahale.dropwizard.views.flashscope.FlashOut flash) {
             return Response.ok().build();
         }
 
         @Path("/flash-return")
         @GET
         @Produces("text/plain")
-        public String getResult(@FlashScope FlashIn flashIn) {
+        public String getResult(@FlashScope com.codahale.dropwizard.views.flashscope.FlashIn flashIn) {
             return flashIn.get("actionMessage");
         }
 
         @Path("/flash-nested-value")
         @GET
         @Produces("text/plain")
-        public String getNestedValue(@FlashScope FlashIn flashIn) {
+        public String getNestedValue(@FlashScope com.codahale.dropwizard.views.flashscope.FlashIn flashIn) {
             Map<String, String> outer = flashIn.get("outer");
             return outer.get("inner");
         }
