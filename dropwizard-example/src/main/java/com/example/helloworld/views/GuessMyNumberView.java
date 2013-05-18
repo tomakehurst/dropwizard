@@ -1,6 +1,6 @@
 package com.example.helloworld.views;
 
-import com.yammer.dropwizard.views.View;
+import com.codahale.dropwizard.views.View;
 
 public class GuessMyNumberView extends View {
 
