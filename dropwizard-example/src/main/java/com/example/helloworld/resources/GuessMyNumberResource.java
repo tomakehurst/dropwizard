@@ -1,11 +1,14 @@
 package com.example.helloworld.resources;
 
-import com.example.helloworld.views.GuessMyNumberView;
-import com.codahale.dropwizard.views.flashscope.FlashIn;
-import com.codahale.dropwizard.views.flashscope.FlashOut;
+import com.codahale.dropwizard.views.flashscope.Flash;
 import com.codahale.dropwizard.views.flashscope.FlashScope;
+import com.example.helloworld.views.GuessMyNumberView;
+import com.google.common.base.Optional;
 
-import javax.ws.rs.*;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.HttpHeaders.LOCATION;
@@ -15,18 +18,18 @@ public class GuessMyNumberResource {
 
     @Path("form")
     @GET
-    public GuessMyNumberView showGuessForm(@FlashScope FlashIn flashIn) {
-        String message = flashIn.get("message");
-        return new GuessMyNumberView(message != null ? message : "");
+    public GuessMyNumberView showGuessForm(@FlashScope Flash flash) {
+        Optional<String> message = flash.get(String.class);
+        return new GuessMyNumberView(message.or(""));
     }
 
     @Path("number")
     @POST
-    public Response processGuess(@FlashScope FlashOut flashOut, @FormParam("number") String number) {
+    public Response processGuess(@FlashScope Flash flash, @FormParam("number") String number) {
         if (number.equals("4")) {
-            flashOut.put("message", "Correct!");
+            flash.set("Correct!");
         } else {
-            flashOut.put("message", "Wrong!");
+            flash.set("Wrong!");
         }
 
         return Response.status(302).header(LOCATION, "/guess/form").build();
