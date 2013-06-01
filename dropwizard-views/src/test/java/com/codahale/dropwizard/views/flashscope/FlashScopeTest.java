@@ -2,9 +2,7 @@ package com.codahale.dropwizard.views.flashscope;
 
 import com.codahale.dropwizard.testing.ResourceTest;
 import com.codahale.dropwizard.views.TestUtils;
-import com.codahale.dropwizard.views.flashscope.FlashScope;
-import com.codahale.dropwizard.views.flashscope.FlashScopeInjectableProvider;
-import com.codahale.dropwizard.views.flashscope.FlashScopeResourceMethodDispatchAdapter;
+import com.google.common.collect.ImmutableMap;
 import com.sun.jersey.api.client.ClientResponse;
 import org.junit.Test;
 
@@ -18,6 +16,9 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Map;
 
+import static com.codahale.dropwizard.views.TestUtils.flashCookieIn;
+import static com.codahale.dropwizard.views.TestUtils.hasCookieWithName;
+import static com.codahale.dropwizard.views.flashscope.FlashScope.COOKIE_NAME;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
@@ -26,8 +27,8 @@ public class FlashScopeTest extends ResourceTest {
     @Override
     protected void setUpResources() throws Exception {
         addResource(new FlashScopeTestResource());
-        addProvider(new FlashScopeInjectableProvider());
-        addProvider(new FlashScopeResourceMethodDispatchAdapter());
+        addProvider(new FlashScopeInjectableProvider(getObjectMapperFactory(), new FlashScopeConfig()));
+        addProvider(new FlashScopeResourceMethodDispatchAdapter(getObjectMapperFactory()));
     }
 
     @Test
@@ -36,8 +37,8 @@ public class FlashScopeTest extends ResourceTest {
                 .resource("/flash-test")
                 .post(ClientResponse.class);
 
-        assertThat(response.getCookies(), TestUtils.hasCookieWithName(FlashScope.COOKIE_NAME));
-        String decodedValue = URLDecoder.decode(TestUtils.flashCookieIn(response).getValue(), "utf-8");
+        assertThat(response.getCookies(), hasCookieWithName(COOKIE_NAME));
+        String decodedValue = URLDecoder.decode(flashCookieIn(response).getValue(), "utf-8");
         assertThat(decodedValue, containsString("It worked"));
     }
 
@@ -47,14 +48,14 @@ public class FlashScopeTest extends ResourceTest {
                 .resource("/flash-empty")
                 .post(ClientResponse.class);
 
-        assertThat(response.getCookies(), not(TestUtils.hasCookieWithName(FlashScope.COOKIE_NAME)));
+        assertThat(response.getCookies(), not(hasCookieWithName(COOKIE_NAME)));
     }
 
     @Test
     public void retrievesFlashScopeContents() throws Exception {
         String message = client()
                 .resource("/flash-return")
-                .cookie(new NewCookie(FlashScope.COOKIE_NAME,
+                .cookie(new NewCookie(COOKIE_NAME,
                         URLEncoder.encode("{\"actionMessage\":\"Flash aaahhh-ahhhhh\"}", "utf-8")))
                 .get(String.class);
 
@@ -65,7 +66,7 @@ public class FlashScopeTest extends ResourceTest {
     public void canReadNestedValues() throws Exception {
         String message = client()
                 .resource("/flash-nested-value")
-                .cookie(new NewCookie(FlashScope.COOKIE_NAME,
+                .cookie(new NewCookie(COOKIE_NAME,
                         URLEncoder.encode(
                                 "{                                  \n" +
                                 "  \"outer\": {                     \n" +
@@ -82,12 +83,12 @@ public class FlashScopeTest extends ResourceTest {
     public void immediatelyExpiresPreviousFlashCookie() throws Exception {
         ClientResponse response = client()
                 .resource("/flash-return")
-                .cookie(new NewCookie(FlashScope.COOKIE_NAME,
+                .cookie(new NewCookie(COOKIE_NAME,
                     URLEncoder.encode("{\"actionMessage\":\"Should not see this\"}", "utf-8")))
                 .get(ClientResponse.class);
 
-        assertThat(response.getCookies(), TestUtils.hasCookieWithName(FlashScope.COOKIE_NAME));
-        assertThat(TestUtils.flashCookieIn(response).getMaxAge(), is(0));
+        assertThat(response.getCookies(), hasCookieWithName(COOKIE_NAME));
+        assertThat(flashCookieIn(response).getMaxAge(), is(0));
     }
 
     @Path("/")
@@ -95,29 +96,33 @@ public class FlashScopeTest extends ResourceTest {
 
         @Path("/flash-test")
         @POST
-        public Response doSomething(@FlashScope com.codahale.dropwizard.views.flashscope.FlashOut flash) {
-            flash.put("actionMessage", "It worked");
+        public Response doSomething(@FlashScope Flash flash) {
+            flash.set(ImmutableMap.of("actionMessage", "It worked"));
             return Response.ok().build();
         }
 
         @Path("/flash-empty")
         @POST
-        public Response doSomethingWithNoFlashOutput(@FlashScope com.codahale.dropwizard.views.flashscope.FlashOut flash) {
+        public Response doSomethingWithNoFlashOutput(@FlashScope Flash flash) {
             return Response.ok().build();
         }
 
+        @SuppressWarnings("unchecked")
         @Path("/flash-return")
         @GET
         @Produces("text/plain")
-        public String getResult(@FlashScope com.codahale.dropwizard.views.flashscope.FlashIn flashIn) {
-            return flashIn.get("actionMessage");
+        public String getResult(@FlashScope Flash flash) {
+            Map<String, String> contents = flash.get(Map.class).get();
+            return contents.get("actionMessage");
         }
 
+        @SuppressWarnings("unchecked")
         @Path("/flash-nested-value")
         @GET
         @Produces("text/plain")
-        public String getNestedValue(@FlashScope com.codahale.dropwizard.views.flashscope.FlashIn flashIn) {
-            Map<String, String> outer = flashIn.get("outer");
+        public String getNestedValue(@FlashScope Flash flash) {
+            Map<String, Map<String, String>> contents = flash.get(Map.class).get();
+            Map<String, String> outer = contents.get("outer");
             return outer.get("inner");
         }
 

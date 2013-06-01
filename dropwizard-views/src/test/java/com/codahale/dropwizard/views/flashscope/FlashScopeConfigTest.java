@@ -3,10 +3,6 @@ package com.codahale.dropwizard.views.flashscope;
 import com.codahale.dropwizard.testing.ResourceTest;
 import com.codahale.dropwizard.util.Duration;
 import com.codahale.dropwizard.views.TestUtils;
-import com.codahale.dropwizard.views.flashscope.FlashScope;
-import com.codahale.dropwizard.views.flashscope.FlashScopeConfig;
-import com.codahale.dropwizard.views.flashscope.FlashScopeInjectableProvider;
-import com.codahale.dropwizard.views.flashscope.FlashScopeResourceMethodDispatchAdapter;
 import com.sun.jersey.api.client.ClientResponse;
 import org.junit.Test;
 
@@ -15,6 +11,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
+import static com.codahale.dropwizard.views.TestUtils.findCookie;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -23,8 +20,8 @@ public class FlashScopeConfigTest extends ResourceTest {
     @Override
     protected void setUpResources() throws Exception {
         addResource(new FlashScopeTestResource());
-        addProvider(new FlashScopeInjectableProvider());
-        addProvider(new FlashScopeResourceMethodDispatchAdapter(new TestConfig()));
+        addProvider(new FlashScopeInjectableProvider(getObjectMapperFactory(), new TestConfig()));
+        addProvider(new FlashScopeResourceMethodDispatchAdapter(new TestConfig(), getObjectMapperFactory()));
     }
 
     @Test
@@ -33,7 +30,7 @@ public class FlashScopeConfigTest extends ResourceTest {
                 .resource("/flash-test")
                 .post(ClientResponse.class);
 
-        NewCookie cookie = TestUtils.findCookie(response, "CUSTOM_FLASH");
+        NewCookie cookie = findCookie(response, "CUSTOM_FLASH");
         assertThat(cookie.getPath(), is("/flash-test"));
         assertThat(cookie.getDomain(), is("flashtown.com"));
         assertThat(cookie.getMaxAge(), is(7));
@@ -66,8 +63,8 @@ public class FlashScopeConfigTest extends ResourceTest {
 
         @Path("/flash-test")
         @POST
-        public Response doSomething(@FlashScope com.codahale.dropwizard.views.flashscope.FlashOut flash) {
-            flash.put("actionMessage", "It worked");
+        public Response doSomething(@FlashScope Flash flash) {
+            flash.set("actionMessage");
             return Response.ok().build();
         }
     }

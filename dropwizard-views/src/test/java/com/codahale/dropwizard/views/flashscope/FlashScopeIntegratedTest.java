@@ -8,12 +8,10 @@ import com.codahale.dropwizard.setup.Bootstrap;
 import com.codahale.dropwizard.setup.Environment;
 import com.codahale.dropwizard.testing.junit.DropwizardAppRule;
 import com.codahale.dropwizard.views.TestUtils;
-import com.codahale.dropwizard.views.flashscope.FlashScope;
-import com.codahale.dropwizard.views.flashscope.FlashScopeBundle;
-import com.codahale.dropwizard.views.flashscope.FlashScopeConfig;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -26,7 +24,9 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.net.URI;
+import java.util.Map;
 
+import static com.codahale.dropwizard.views.TestUtils.findCookie;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -35,7 +35,7 @@ public class FlashScopeIntegratedTest {
 
     @ClassRule
     public static DropwizardAppRule<TestConfig> RULE =
-            new DropwizardAppRule<TestConfig>(FlashScopeTestApp.class,
+            new DropwizardAppRule<>(FlashScopeTestApp.class,
                                                      resourceFilePath("flash.yml"));
 
     Client client;
@@ -62,7 +62,7 @@ public class FlashScopeIntegratedTest {
     public void cookieMaxAgeOverridden() {
         ClientResponse response = client.resource(fullUrl("/action-no-redirect")).post(ClientResponse.class);
 
-        assertThat(TestUtils.findCookie(response, FlashScope.COOKIE_NAME).getMaxAge(), is(20));
+        assertThat(findCookie(response, FlashScope.COOKIE_NAME).getMaxAge(), is(20));
     }
 
     private String fullUrl(String relativeUrl) {
@@ -92,22 +92,23 @@ public class FlashScopeIntegratedTest {
 
         @Path("action")
         @POST
-        public Response doSomething(@FlashScope com.codahale.dropwizard.views.flashscope.FlashOut flash, @FormParam("message") String message) {
-            flash.put("message", message);
+        public Response doSomething(@FlashScope Flash flash, @FormParam("message") String message) {
+            flash.set(ImmutableMap.of("message", message));
             return Response.seeOther(URI.create("/result")).build();
         }
 
         @Path("result")
         @GET
         @Produces("text/plain")
-        public String getResult(@FlashScope com.codahale.dropwizard.views.flashscope.FlashIn flash) {
-            return flash.get("message");
+        public String getResult(@FlashScope Flash flash) {
+            Map<String, String> contents = flash.get(Map.class).get();
+            return contents.get("message");
         }
 
         @Path("action-no-redirect")
         @POST
-        public Response putSomethingInTheFlash(@FlashScope com.codahale.dropwizard.views.flashscope.FlashOut flash) {
-            flash.put("something", "anything");
+        public Response putSomethingInTheFlash(@FlashScope Flash flash) {
+            flash.set(ImmutableMap.of("something", "anything"));
             return Response.ok().build();
         }
 

@@ -1,5 +1,6 @@
 package com.codahale.dropwizard.views.flashscope;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.api.model.Parameter;
 import com.sun.jersey.core.spi.component.ComponentContext;
@@ -11,6 +12,14 @@ import com.sun.jersey.spi.inject.InjectableProvider;
 
 public class FlashScopeInjectableProvider implements InjectableProvider<FlashScope, Parameter> {
 
+    private final ObjectMapper objectMapper;
+    private FlashScopeConfig config;
+
+    public FlashScopeInjectableProvider(ObjectMapper objectMapper, FlashScopeConfig config) {
+        this.objectMapper = objectMapper;
+        this.config = config;
+    }
+
     @Override
     public ComponentScope getScope() {
         return ComponentScope.PerRequest;
@@ -21,18 +30,13 @@ public class FlashScopeInjectableProvider implements InjectableProvider<FlashSco
         return new AbstractHttpContextInjectable<Flash>() {
             @Override
             public Flash getValue(HttpContext context) {
-                if (parameter.getParameterClass().equals(FlashOut.class)) {
-                    FlashOut flashOut = new FlashOut();
-                    context.getProperties().put(FlashOut.class.getName(), flashOut);
-                    return flashOut;
+                if (parameter.getParameterClass().equals(Flash.class)) {
+                    Flash flash = new Flash(objectMapper, context, config);
+                    context.getProperties().put(Flash.class.getName(), flash);
+                    return flash;
                 }
 
-                FlashIn flashIn = (FlashIn) context.getProperties().get(FlashIn.class.getName());
-                if (flashIn != null) {
-                    return flashIn;
-                }
-
-                return new FlashIn();
+                return null;
             }
         };
     }
